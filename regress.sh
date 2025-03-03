@@ -5,13 +5,9 @@ if [ ! -d orig ]; then
 	exit;
 fi
 
-for i in cbmbasic1 cbmbasic2 kbdbasic osi kb9 applesoft microtan aim65 sym1; do
-
-echo $i
-ca65 -D $i msbasic.s -o tmp/$i.o &&
-ld65 -C $i.cfg tmp/$i.o -o tmp/$i-new.bin -Ln tmp/$i.lbl && 
-xxd -g 1 orig/$i.bin > tmp/$i.bin.txt
-xxd -g 1 tmp/$i-new.bin > tmp/$i-new.bin.txt
-diff -u tmp/$i.bin.txt tmp/$i-new.bin.txt | head
-
-done
+echo eater
+ca65 -D eater msbasic.s -o tmp/eater.o &&
+ld65 -C eater.cfg tmp/eater.o -o tmp/eater-new.bin -Ln tmp/eater.lbl && 
+xxd -g 1 orig/eater.bin > tmp/eater.bin.txt
+xxd -g 1 tmp/eater-new.bin > tmp/eater-new.bin.txt
+diff -u tmp/eater.bin.txt tmp/eater-new.bin.txt | head
