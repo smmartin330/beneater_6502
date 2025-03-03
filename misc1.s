@@ -1,158 +1,143 @@
 .segment "CODE"
 
 ; ----------------------------------------------------------------------------
-; "FRE" FUNCTION
-;
-; COLLECTS GARBAGE AND RETURNS # BYTES OF MEMORY LEFT
+; CONVERT LINE NUMBER
 ; ----------------------------------------------------------------------------
-FRE:
-        lda     VALTYP
-        beq     L3188
-        jsr     FREFAC
-L3188:
-        jsr     GARBAG
-        sec
-        lda     FRETOP
-        sbc     STREND
-        tay
-        lda     FRETOP+1
-        sbc     STREND+1
-; FALL INTO GIVAYF TO FLOAT THE VALUE
-; NOTE THAT VALUES OVER 32767 WILL RETURN AS NEGATIVE
-
-; ----------------------------------------------------------------------------
-; FLOAT THE SIGNED INTEGER IN A,Y
-; ----------------------------------------------------------------------------
-GIVAYF:
+LINGET:
         ldx     #$00
-        stx     VALTYP
-        sta     FAC+1
-        sty     FAC+2
-        ldx     #$90
-        jmp     FLOAT1
-POS:
-        ldy     POSX
+        stx     LINNUM
+        stx     LINNUM+1
+L28BE:
+        bcs     L28B7
+        sbc     #$2F
+        sta     CHARAC
+        lda     LINNUM+1
+        sta     INDEX
+        cmp     #$19
+        bcs     L28A0
+; <<<<<DANGEROUS CODE>>>>>
+; NOTE THAT IF (A) = $AB ON THE LINE ABOVE,
+; ON.1 WILL COMPARE = AND CAUSE A CATASTROPHIC
+; JUMP TO $22D9 (FOR GOTO), OR OTHER LOCATIONS
+; FOR OTHER CALLS TO LINGET.
+;
+; YOU CAN SEE THIS IS YOU FIRST PUT "BRK" IN $22D9,
+; THEN TYPE "GO TO 437761".
+;
+; ANY VALUE FROM 437760 THROUGH 440319 WILL CAUSE
+; THE PROBLEM.  ($AB00 - $ABFF)
+; <<<<<DANGEROUS CODE>>>>>
+        lda     LINNUM
+        asl     a
+        rol     INDEX
+        asl     a
+        rol     INDEX
+        adc     LINNUM
+        sta     LINNUM
+        lda     INDEX
+        adc     LINNUM+1
+        sta     LINNUM+1
+        asl     LINNUM
+        rol     LINNUM+1
+        lda     LINNUM
+        adc     CHARAC
+        sta     LINNUM
+        bcc     L28EC
+        inc     LINNUM+1
+L28EC:
+        jsr     CHRGET
+        jmp     L28BE
 
 ; ----------------------------------------------------------------------------
-; FLOAT (Y) INTO FAC, GIVING VALUE 0-255
+; "LET" STATEMENT
+;
+; LET <VAR> = <EXP>
+; <VAR> = <EXP>
 ; ----------------------------------------------------------------------------
-SNGFLT:
-        lda     #$00
-        beq     GIVAYF
-
-; ----------------------------------------------------------------------------
-; CHECK FOR DIRECT OR RUNNING MODE
-; GIVING ERROR IF DIRECT MODE
-; ----------------------------------------------------------------------------
-ERRDIR:
-        ldx     CURLIN+1
-        inx
-        bne     RTS9
-        ldx     #ERR_ILLDIR
-        .byte   $2C
-LD288:
-        ldx     #ERR_UNDEFFN
-L31AF:
-        jmp     ERROR
-DEF:
-        jsr     FNC
-        jsr     ERRDIR
-        jsr     CHKOPN
-        lda     #$80
-        sta     SUBFLG
+LET:
         jsr     PTRGET
-        jsr     CHKNUM
-        jsr     CHKCLS
+        sta     FORPNT
+        sty     FORPNT+1
         lda     #TOKEN_EQUAL
         jsr     SYNCHR
+        lda     VALTYP+1
         pha
-        lda     VARPNT+1
+        lda     VALTYP
         pha
-        lda     VARPNT
-        pha
-        lda     TXTPTR+1
-        pha
-        lda     TXTPTR
-        pha
-        jsr     DATA
-        jmp     L3250
-FNC:
-        lda     #TOKEN_FN
-        jsr     SYNCHR
-        ora     #$80
-        sta     SUBFLG
-        jsr     PTRGET3
-        sta     FNCNAM
-        sty     FNCNAM+1
-        jmp     CHKNUM
-L31F3:
-        jsr     FNC
-        lda     FNCNAM+1
-        pha
-        lda     FNCNAM
-        pha
-        jsr     PARCHK
-        jsr     CHKNUM
+        jsr     FRMEVL
         pla
-        sta     FNCNAM
+        rol     a
+        jsr     CHKVAL
+        bne     LETSTRING
         pla
-        sta     FNCNAM+1
-        ldy     #$02
-        lda     (FNCNAM),y
-        sta     VARPNT
-        tax
-        iny
-        lda     (FNCNAM),y
-        beq     LD288
-        sta     VARPNT+1
-        iny
-L3219:
-        lda     (VARPNT),y
-        pha
-        dey
-        bpl     L3219
-        ldy     VARPNT+1
-        jsr     STORE_FAC_AT_YX_ROUNDED
-        lda     TXTPTR+1
-        pha
-        lda     TXTPTR
-        pha
-        lda     (FNCNAM),y
-        sta     TXTPTR
-        iny
-        lda     (FNCNAM),y
-        sta     TXTPTR+1
-        lda     VARPNT+1
-        pha
-        lda     VARPNT
-        pha
-        jsr     FRMNUM
-        pla
-        sta     FNCNAM
-        pla
-        sta     FNCNAM+1
-        jsr     CHRGOT
-        beq     L324A
-        jmp     SYNERR
-L324A:
-        pla
-        sta     TXTPTR
-        pla
-        sta     TXTPTR+1
-L3250:
+LET2:
+        bpl     L2923
+        jsr     ROUND_FAC
+        jsr     AYINT
         ldy     #$00
-        pla
-        sta     (FNCNAM),y
-        pla
+        lda     FAC+3
+        sta     (FORPNT),y
         iny
-        sta     (FNCNAM),y
+        lda     FAC+4
+        sta     (FORPNT),y
+        rts
+L2923:
+
+; ----------------------------------------------------------------------------
+; REAL VARIABLE = EXPRESSION
+; ----------------------------------------------------------------------------
+        jmp     SETFOR
+LETSTRING:
         pla
+
+; ----------------------------------------------------------------------------
+; INSTALL STRING, DESCRIPTOR ADDRESS IS AT FAC+3,4
+; ----------------------------------------------------------------------------
+PUTSTR:
+        ldy     #$02
+        lda     (FAC_LAST-1),y
+        cmp     FRETOP+1
+        bcc     L2946
+        bne     L2938
+        dey
+        lda     (FAC_LAST-1),y
+        cmp     FRETOP
+        bcc     L2946
+L2938:
+        ldy     FAC_LAST
+        cpy     VARTAB+1
+        bcc     L2946
+        bne     L294D
+        lda     FAC_LAST-1
+        cmp     VARTAB
+        bcs     L294D
+L2946:
+        lda     FAC_LAST-1
+        ldy     FAC_LAST
+        jmp     L2963
+L294D:
+        ldy     #$00
+        lda     (FAC_LAST-1),y
+        jsr     STRINI
+        lda     DSCPTR
+        ldy     DSCPTR+1
+        sta     STRNG1
+        sty     STRNG1+1
+        jsr     MOVINS
+        lda     #FAC
+        ldy     #$00
+L2963:
+        sta     DSCPTR
+        sty     DSCPTR+1
+        jsr     FRETMS
+        ldy     #$00
+        lda     (DSCPTR),y
+        sta     (FORPNT),y
         iny
-        sta     (FNCNAM),y
-        pla
+        lda     (DSCPTR),y
+        sta     (FORPNT),y
         iny
-        sta     (FNCNAM),y
-        pla
-        iny
-        sta     (FNCNAM),y
+        lda     (DSCPTR),y
+        sta     (FORPNT),y
+RET5:
         rts
