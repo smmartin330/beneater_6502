@@ -17,6 +17,13 @@ ACIA_CMD        = $5002
 ACIA_CTRL       = $5003
 PORTA           = $6001
 DDRA            = $6003
+CB2             = $600C
+CB2_LOW         = %11100000
+CB2_HIGH        = %11011111
+
+
+   ;Need $C0 in top 3 bits
+
 
 LOAD:
                 rts
@@ -33,17 +40,19 @@ SAVE:
 MONRDKEY:
 CHRIN:
                 phx
-                jsr     BUFFER_SIZE
-                beq     @no_keypressed
-                jsr     READ_BUFFER
-                jsr     CHROUT                  ; echo
+                jsr BUFFER_SIZE
+                beq @no_keypressed
+                jsr READ_BUFFER
+                jsr CHROUT                  ; echo
                 pha
-                jsr     BUFFER_SIZE
-                cmp     #$B0
-                bcs     @mostly_full
-                lda     #$fe
-                and     PORTA
-                sta     PORTA
+                jsr BUFFER_SIZE
+                cmp #$B0
+                bcs @mostly_full
+                lda CB2
+                ; set 600C to 110 (low inverted to high) to indicate ready to receive
+                ora #$C0 ;11000000 - set 1s
+                and #$DF ;11011111 - unset 0s
+                sta CB2
 @mostly_full:
                 pla
                 plx
@@ -61,10 +70,10 @@ CHRIN:
 MONCOUT:
 CHROUT:
                 pha
-                sta     ACIA_DATA
-                lda     #$FF
+                sta ACIA_DATA
+                lda #$FF
 @txdelay:       dec
-                bne     @txdelay
+                bne @txdelay
                 pla
                 rts
 
@@ -73,11 +82,11 @@ CHROUT:
 INIT_BUFFER:
                 lda READ_PTR
                 sta WRITE_PTR
-                lda #$01
-                sta DDRA
-                lda #$fe
-                and PORTA
-                sta PORTA
+                lda CB2
+                ; set 600C to 110 (low inverted to high) to indicate ready to receive
+                ora #$C0 ;11000000 - set 11X
+                and #$DF ;11011111 - set XX0
+                sta CB2
                 rts
 
 ; Write a character (from the A register) to the circular input buffer
@@ -109,16 +118,18 @@ BUFFER_SIZE:
 IRQ_HANDLER:
                 pha
                 phx
-                lda     ACIA_STATUS
+                lda ACIA_STATUS
                 ; For now, assume the only source of interrupts is incoming data
-                lda     ACIA_DATA
-                jsr     WRITE_BUFFER
-                jsr     BUFFER_SIZE
-                cmp     #$F0
-                bcc     @not_full
-                lda     #$01
-                ora     PORTA
-                sta     PORTA
+                lda ACIA_DATA
+                jsr WRITE_BUFFER
+                jsr BUFFER_SIZE
+                cmp #$F0
+                bcc @not_full
+                lda CB2
+                ; set 111 high (CB2 inverted to low) to indicate not ready
+                ora #$E0 ;11100000 - set 111
+                sta CB2
+
 @not_full:
                 plx
                 pla

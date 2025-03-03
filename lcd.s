@@ -1,5 +1,4 @@
 .segment "CODE"
-.ifdef EATER
 PORTB = $6000
 DDRB = $6002
 E  = %01000000
@@ -142,5 +141,3 @@ lcd_print_char:
   eor #E          ; Clear E bit
   sta PORTB
   rts
-
-.endif

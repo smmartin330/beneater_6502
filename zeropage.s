@@ -16,26 +16,16 @@ GOGIVEAYF:
 .org ZP_START2
 Z15:
 	.res 1
-.ifndef POSX; allow override
 POSX:
-.endif
 	.res 1
-.ifndef Z17; allow override
 Z17:
-.endif
 	.res 1
-.ifndef Z18; allow override
 Z18:
-.endif
 	.res 1
 LINNUM:
-.ifndef TXPSV; allow override
 TXPSV:
-.endif
 	.res 2
-.ifndef INPUTBUFFER; allow override
 INPUTBUFFER:
-.endif
 
 .org ZP_START3
 
@@ -48,11 +38,7 @@ EOLPNTR:
 DIMFLG:
 	.res 1
 VALTYP:
-.ifdef CONFIG_SMALL
-	.res 1
-.else
 	.res 2
-.endif
 DATAFLG:
 	.res 1
 SUBFLG:
@@ -119,44 +105,29 @@ FNCNAM:
 TEMP3:
 	.res 2
 DSCPTR:
-.ifdef CONFIG_SMALL
-		.res 2
-.else
 		.res 3
-.endif
 DSCLEN:
 	.res 2
-.ifndef JMPADRS ; allow override
 JMPADRS			:= DSCLEN + 1
-.endif
 Z52:
 	.res 1
 ARGEXTENSION:
-.ifndef CONFIG_SMALL
 	.res 1
-.endif
 TEMP1:
 	.res 1
 HIGHDS:
 	.res 2
 HIGHTR:
 	.res 2
-.ifndef CONFIG_SMALL
 TEMP2:
 	.res 1
-.endif
 INDX:
 TMPEXP:
-.ifdef CONFIG_SMALL
-TEMP2:
-.endif
 	.res 1
 EXPON:
 	.res 1
 LOWTR:
-.ifndef LOWTRX ; allow override
 LOWTRX:
-.endif
 	.res 1
 EXPSGN:
 	.res 1
@@ -180,20 +151,7 @@ SGNCPR = STRNG1
 FACEXTENSION = STRNG1+1
 STRNG2:
 	.res 2
-.ifdef AIM65
-ATN:
-	.res 3
-ZBE:
-	.res 1
-.endif
-.ifdef SYM1
-USR1:
-	.res 3
-USR2:
-	.res 3
-USR3:
-	.res 3
-.endif
+
 CHRGET:
 TXTPTR = <(GENERIC_TXTPTR-GENERIC_CHRGET + CHRGET)
 CHRGOT = <(GENERIC_CHRGOT-GENERIC_CHRGET + CHRGET)

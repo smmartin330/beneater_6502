@@ -7,9 +7,6 @@ GENERIC_CHRGET:
 GENERIC_CHRGOT:
 GENERIC_TXTPTR = GENERIC_CHRGOT + 1
         lda     $EA60
-.ifdef KBD
-        jsr     LF430
-.endif
         cmp     #$3A
         bcs     L4058
 GENERIC_CHRGOT2:
