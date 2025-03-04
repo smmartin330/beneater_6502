@@ -71,7 +71,7 @@ temp    =   $FC
 ;
 ;
 ;		*=$1000			; load into RAM @ $1000-$15F
-; .org $B000 ; adding this caused it to not boot!
+.org $B000
 
 MCMAIN:
 		LDA #$00		; REVERSE TOGGLE
