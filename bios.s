@@ -37,6 +37,7 @@ SAVE:
 ; If a key was pressed, the key value will be in the A register
 ;
 ; Modifies: flags, A
+syskin:
 MONRDKEY:
 CHRIN:
                 phx
@@ -67,6 +68,7 @@ CHRIN:
 ; Output a character (from the A register) to the serial interface.
 ;
 ; Modifies: flags
+syschrout:
 MONCOUT:
 CHROUT:
                 pha
