@@ -66,19 +66,16 @@ BESTM   =	$F9
 DIS1    =	$FB 
 DIS2    =	$FA 
 DIS3    =	$F9 
-temp    =   $FC
-;
-;
-;
-;		*=$1000			; load into RAM @ $1000-$15F
+temp    =       $FC
+
 .org $B000
 
 MCMAIN:
 		LDA #$00		; REVERSE TOGGLE
 		STA REV
-;       JSR Init_6551   ; already initialized by BIOS.
+
 CHESS:
-		CLD			    ; INITIALIZE
+		CLD			; INITIALIZE
 		LDX	#$FF		; TWO STACKS
 		TXS	
 		LDX	#$C8
@@ -397,7 +394,7 @@ ILL1:
 LINE:
 		JSR	CMOVE         	; CALC MOVE
 		BCC	OVL            	; NO CHK
-		BVC	LINE		; NOCAP       
+		BVC	LINE			; NOCAP       
 OVL:
 		BMI	ILL             ; RETURN
 		PHP	
@@ -405,7 +402,7 @@ OVL:
 		PLP	
 		BVC	LINE          	; NOT A CAP
 ILL:
-		JSR	MCRESET         	; LINE STOPPED
+		JSR	MCRESET         ; LINE STOPPED
 		DEC	MOVEN         	; NEXT DIR
 		RTS	
 ;		
@@ -416,13 +413,13 @@ REVERSE:
 		LDX	#$0F
 ETC:
 		SEC	
-		LDY	BK,X           	; SUBTRACT
+		LDY	BK,X           		; SUBTRACT
 		LDA 	#$77           	; POSITION
 		SBC  	BOARD,X        	; FROM 77
 		STA  	BK,X
 		STY  	BOARD,X         ; AND
 		SEC	
-		LDA	#$77           	; EXCHANGE
+		LDA	#$77           		; EXCHANGE
 		SBC 	BOARD,X        	; PIECES
 		STA  	BOARD,X
 		DEX	
@@ -897,8 +894,8 @@ POUT15:
 
 KIN:
         LDA   	#$3F
-		JSR   	syschout	; PRINT ONE ASCII CHR - ?
-		JSR   	syskin		; GET A KEYSTROKE FROM SYSTEM
+		JSR   	syschout	; PRINT ONE ASCII CHR - ?, moved to bios.s
+		JSR   	syskin		; GET A KEYSTROKE FROM SYSTEM, moved to bios.s
         AND   	#$4F            ; MASK 0-7, AND ALPHA'S
         RTS
 ;
