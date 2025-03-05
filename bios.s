@@ -21,25 +21,19 @@ CB2             = $600C
 CB2_LOW         = %11100000
 CB2_HIGH        = %11011111
 
-
-   ;Need $C0 in top 3 bits
-
-
 LOAD:
                 rts
-
 SAVE:
                 rts
-
 
 ; Input a character from the serial interface.
 ; On return, carry flag indicates whether a key was pressed
 ; If a key was pressed, the key value will be in the A register
 ;
 ; Modifies: flags, A
-syskin:
-MONRDKEY:
-CHRIN:
+
+MONRDKEY:       ; For BASIC
+CHRIN:          ; For everything else.
                 phx
                 jsr BUFFER_SIZE
                 beq @no_keypressed
@@ -64,13 +58,23 @@ CHRIN:
                 clc
                 rts
 
+; Simple serial input routine for microchess
+;
+; Modifies: flags, A
+syskin:
+               lda ACIA_STATUS
+               and #$08
+               beq syskin
+               lda ACIA_DATA
+               sec
+               rts
 
 ; Output a character (from the A register) to the serial interface.
 ;
 ; Modifies: flags
-syschrout:
-MONCOUT:
-CHROUT:
+syschout:      ; For Microchess
+MONCOUT:       ; For BASIC
+CHROUT:        ; For everything else.
                 pha
                 sta ACIA_DATA
                 lda #$FF
